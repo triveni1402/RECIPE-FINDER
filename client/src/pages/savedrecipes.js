@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useGetUserID } from "../hooks/useGetUserID";
 import axios from "axios";
+import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
 
 export const SavedRecipes = () => {
   const [showform, setShowform] = useState(false);
@@ -11,11 +13,9 @@ export const SavedRecipes = () => {
   const [newRecipeIngredients,setNewRecipeIngredients]=useState([]);
   const [editingRecipeId, setEditingRecipeId] = useState(null); 
   const userID = useGetUserID();
-  useEffect(() => {
-    if (!cookies.access_token) {
-      navigate("/login");
-    }
-  }, [])
+  const [cookies] = useCookies(["access_token"]);
+  
+  
   const setNewIng = (e, idx) => {
     const { value } = e.target;
     const ingredients = [...newRecipeIngredients];
