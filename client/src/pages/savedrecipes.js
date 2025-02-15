@@ -17,7 +17,7 @@ export const SavedRecipes = () => {
     const fetchSavedRecipes = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/recipes/savedRecipes/${userID}`
+          `${process.env.REACT_APP_SERVER_URL}/recipes/savedRecipes/${userID}`
         );
         setSavedRecipes(response.data.savedRecipes);
       } catch (err) {
@@ -35,7 +35,7 @@ export const SavedRecipes = () => {
   const editRecipe = async (recipeID) => {
     try {
       const response = await axios.put(
-        `http://localhost:3001/recipes/edit/${recipeID}`,
+        `${process.env.REACT_APP_SERVER_URL}/recipes/edit/${recipeID}`,
         {
           name: newRecipeName,
           description: newRecipeDescription,
@@ -66,7 +66,7 @@ export const SavedRecipes = () => {
   const deleteRecipe = async (recipeID) => {
     if (window.confirm("Are you sure")) {
       try {
-        await axios.delete(`http://localhost:3001/recipes/delete/${recipeID}`);
+        await axios.delete(`${process.env.REACT_APP_SERVER_URL}/recipes/delete/${recipeID}`);
         setSavedRecipes(savedRecipes.filter(recipe => recipe._id !== recipeID));
       } catch (err) {
         console.error("Error deleting recipe:", err);

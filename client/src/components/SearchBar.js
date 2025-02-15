@@ -7,7 +7,7 @@ export const SearchBar = ({ setResults }) => {
   const [input, setInput] = useState("");
 
   const fetchData = (value) => {
-    fetch("http://localhost:3001/recipes")
+    fetch(`${process.env.REACT_APP_SERVER_URL}/recipes`)
       .then((response) => response.json())
       .then((json) => {
         const results = json.filter((user) => {

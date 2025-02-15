@@ -15,7 +15,7 @@ export const Login = () => {
     event.preventDefault();
 
     try {
-      const result = await axios.post("http://localhost:3001/auth/login", {
+      const result = await axios.post(`${process.env.REACT_APP_SERVER_URL}/auth/login`, {
         username,
         password,
       });
