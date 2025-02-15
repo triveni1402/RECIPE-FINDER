@@ -99,31 +99,33 @@ router.get("/savedRecipes/:userId", async (req, res) => {
 // Update a recipe by ID
 router.put('/:id', async (req, res) => {
   try {
-      const updatedRecipe = await Recipe.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      res.json(updatedRecipe);
+    const updatedRecipe = await Recipe.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedRecipe);
   } catch (error) {
-      res.status(400).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 });
 
 // Delete a recipe by ID
 router.delete('/:id', async (req, res) => {
   try {
-      await Recipe.findByIdAndDelete(req.params.id);
-      res.json({ message: 'Recipe deleted' });
+    await Recipe.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Recipe deleted' });
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
 // Search recipes by ingredients
 router.get('/search', async (req, res) => {
+  console.log("i am here");
   const ingredients = req.query.ingredients.split(',');
+  console.log(ingredients);
   try {
-      const recipes = await Recipe.find({ ingredients: { $all: ingredients } });
-      res.json(recipes);
+    const recipes = await Recipe.find({ ingredients: { $all: ingredients } });
+    res.json(recipes);
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -153,12 +155,12 @@ router.delete("/delete/:recipeId", async (req, res) => {
 
 // Update a recipe by ID
 router.put("/edit/:recipeId", async (req, res) => {
-  const { name, description, imageUrl, cookingTime } = req.body;
+  const { name, description, ingredients, imageUrl, cookingTime } = req.body;
 
   try {
     const updatedRecipe = await RecipesModel.findByIdAndUpdate(
       req.params.recipeId,
-      { name, description, imageUrl, cookingTime },
+      { name, description, ingredients, imageUrl, cookingTime },
       { new: true }
     );
 
@@ -176,7 +178,7 @@ router.put("/edit/:recipeId", async (req, res) => {
 // Add a new recipe
 router.post("/add", async (req, res) => {
   const { userID, name, description, imageUrl, cookingTime, instructions } = req.body;
-  
+
   try {
     const user = await UserModel.findById(userID);
     if (!user) {
@@ -204,8 +206,33 @@ router.post("/add", async (req, res) => {
   }
 });
 
+router.delete('/:userId/savedRecipes/:recipeId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const recipeIdToDelete = req.params.recipeId;
 
-    
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const index = user.savedRecipes.indexOf(recipeIdToDelete);
+
+    if (index === -1) {
+      return res.status(404).json({ message: 'Recipe ID not found in saved recipes' });
+    }
+
+    user.savedRecipes.splice(index, 1);
+
+    await user.save();
+
+    res.json({ message: 'Recipe ID deleted from saved recipes' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 
 export { router as recipesRouter };

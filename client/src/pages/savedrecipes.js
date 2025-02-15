@@ -6,39 +6,52 @@ export const SavedRecipes = () => {
   const [showform, setShowform] = useState(false);
   const [savedRecipes, setSavedRecipes] = useState([]);
   const [newRecipeName, setNewRecipeName] = useState("");
-  const [newRecipeDescription, setNewRecipeDescription] = useState("");
   const [newRecipeImageUrl, setNewRecipeImageUrl] = useState("");
   const [newRecipeCookingTime, setNewRecipeCookingTime] = useState(0);
-  const [editingRecipeId, setEditingRecipeId] = useState(null); // Track the ID of the recipe being edited
+  const [newRecipeIngredients,setNewRecipeIngredients]=useState([]);
+  const [editingRecipeId, setEditingRecipeId] = useState(null); 
   const userID = useGetUserID();
-
-  // Fetch saved recipes on component mount
   useEffect(() => {
-    const fetchSavedRecipes = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_SERVER_URL}/recipes/savedRecipes/${userID}`
-        );
-        setSavedRecipes(response.data.savedRecipes);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+    if (!cookies.access_token) {
+      navigate("/login");
+    }
+  }, [])
+  const setNewIng = (e, idx) => {
+    const { value } = e.target;
+    const ingredients = [...newRecipeIngredients];
+    ingredients[idx] = value;
+    setNewRecipeIngredients(ingredients);
+  }
 
+  const addNewIng = () => {
+    const ingredients = [...newRecipeIngredients];
+    ingredients.push("");
+    setNewRecipeIngredients(ingredients);
+  }
+
+  const fetchSavedRecipes = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/recipes/savedRecipes/${userID}`
+      );
+      setSavedRecipes(response.data.savedRecipes);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+  
     fetchSavedRecipes();
   }, [userID]);
-
-  // Function to handle adding a new recipe
-  
-
-  // Function to handle editing a recipe
-  const editRecipe = async (recipeID) => {
+   
+  const editRecipe = async (recipeID) => {""
     try {
       const response = await axios.put(
-        `${process.env.REACT_APP_SERVER_URL}/recipes/edit/${recipeID}`,
+        `http://localhost:3001/recipes/edit/${recipeID}`,
         {
           name: newRecipeName,
-          description: newRecipeDescription,
+          ingredients:newRecipeIngredients,
           imageUrl: newRecipeImageUrl,
           cookingTime: newRecipeCookingTime,
         }
@@ -50,45 +63,50 @@ export const SavedRecipes = () => {
         }
         return recipe;
       }));
-      // Clear input fields after editing
+      
       setNewRecipeName("");
-      setNewRecipeDescription("");
+      setNewRecipeIngredients([]);
       setNewRecipeImageUrl("");
       setNewRecipeCookingTime(0);
-      setEditingRecipeId(null); // Reset editing state
+      setEditingRecipeId(null); 
       setShowform(false);
     } catch (err) {
       console.log(err);
     }
   };
 
-  // Function to handle deleting a recipe
+  
   const deleteRecipe = async (recipeID) => {
     if (window.confirm("Are you sure")) {
       try {
-        await axios.delete(`${process.env.REACT_APP_SERVER_URL}/recipes/delete/${recipeID}`);
-        setSavedRecipes(savedRecipes.filter(recipe => recipe._id !== recipeID));
+        // await axios.delete(`http://localhost:3001/recipes/delete/${recipeID}`);
+        // setSavedRecipes(savedRecipes.filter(recipe => recipe._id !== recipeID));
+
+        await axios.delete(`http://localhost:3001/recipes/${userID}/savedRecipes/${recipeID}`);
+        fetchSavedRecipes();
+
       } catch (err) {
         console.error("Error deleting recipe:", err);
       }
     }
   };
 
-  // Function to set editing state
+  
   const startEditing = (recipe) => {
+    console.log(recipe.ingredients);
     setShowform(true);
     setEditingRecipeId(recipe._id);
     setNewRecipeName(recipe.name);
-    setNewRecipeDescription(recipe.description);
+    setNewRecipeIngredients(recipe.ingredients);
     setNewRecipeImageUrl(recipe.imageUrl);
     setNewRecipeCookingTime(recipe.cookingTime);
+    
   };
 
   return (
     <div>
-      <h1>Saved Recipes</h1>
+      <h1>Saved Recip""es</h1>
 
-      {/* Form for adding/editing recipe */}
       {
         showform == true ?
         <form
@@ -106,13 +124,10 @@ export const SavedRecipes = () => {
           onChange={(e) => setNewRecipeName(e.target.value)}
           required
         />
-        <input
-          type="text"
-          placeholder="Recipe Description"
-          value={newRecipeDescription}
-          onChange={(e) => setNewRecipeDescription(e.target.value)}
-          required
-        />
+
+        
+         
+        
         <input
           type="text"
           placeholder="Image URL"
@@ -129,6 +144,22 @@ export const SavedRecipes = () => {
           }
           required
         />
+
+          <h5>Ingredients</h5>
+        {
+          newRecipeIngredients.map((val, idx) => (
+            <input
+              key={idx}
+              type="text"
+              placeholder="Ingredients"
+              value={val}
+              onChange={(event) => setNewIng(event, idx)}
+              required
+            />
+          ))
+        }
+
+        <button onClick={addNewIng} className="btn btn-info" >add ing</button>
         <button type="submit" className="btn btn-primary">
           {editingRecipeId ? "Update Recipe" : "Add Recipe"}
         </button>
@@ -138,9 +169,9 @@ export const SavedRecipes = () => {
             onClick={() => {
               setEditingRecipeId(null);
               setNewRecipeName("");
-              setNewRecipeDescription("");
               setNewRecipeImageUrl("");
               setNewRecipeCookingTime(0);
+              setNewRecipeIngredients("");
               setShowform(false)
             }}
           >
@@ -151,24 +182,6 @@ export const SavedRecipes = () => {
         :<></>
       }
 
-      {/* Display saved recipes */}
-      {/* <ul>
-        {savedRecipes.map((recipe) => (
-          <li key={recipe._id}>
-            <div>
-              <h2>{recipe.name}</h2>
-              {!editingRecipeId || editingRecipeId !== recipe._id ? (
-                <button onClick={() => startEditing(recipe)}>Edit</button>
-              ) : null}
-              <button onClick={() => deleteRecipe(recipe._id)}>Delete</button>
-            </div>
-            <p>{recipe.description}</p>
-            <img src={recipe.imageUrl} alt={recipe.name} />
-            <p>Cooking Time: {recipe.cookingTime} minutes</p>
-          </li>
-        ))}
-      </ul> */}
-
       <div className="container">
         
         <div style={{display:"flex", flexWrap:"wrap", gap:'15px'}}>
@@ -178,11 +191,12 @@ export const SavedRecipes = () => {
                 <img style={{height:"200px"}} src={recipe.imageUrl} alt={recipe.name} className="card-img-top"/>
                 <div className="card-body">
                   <h5 className="card-title">{recipe.name}</h5>
+                  <p className="card-text">{recipe.Ingredients}</p>
                   <p className="card-text">{recipe.instructions}</p>
                   <p>Cooking Time: {recipe.cookingTime} minutes</p>
                   {
                     !editingRecipeId || editingRecipeId !== recipe._id ? (
-                      <button className="btn btn-info" onClick={() => startEditing(recipe)}>Edit</button>
+                      <button className="btn btn-success" onClick={() => startEditing(recipe)}>Edit</button>
                     ) : null
                   }
                   <button className="btn btn-danger"
@@ -197,4 +211,4 @@ export const SavedRecipes = () => {
     </div>
   );
 };
-export default SavedRecipes; 
+export default SavedRecipes;
